@@ -1,5 +1,8 @@
 package Snake;
 
+import com.studiohartman.jamepad.ControllerManager;
+import com.studiohartman.jamepad.ControllerState;
+
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -9,6 +12,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.Arrays;
+import java.util.Collections;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -63,10 +68,17 @@ public class Board extends JPanel implements ActionListener {
     private int scores[] = new int[5];
     private int times[] = new int[5];
 
+    ControllerManager controllers = new ControllerManager();
+
     public Board() {
+
+        Arrays.fill(scores, 0);
+        Arrays.fill(times, 0);
 
         addKeyListener(new TAdapter());
         setFocusable(true);
+
+        controllers.initSDLGamepad();
 
         //draw testfield and button
         drawJComponent();
@@ -130,20 +142,34 @@ public class Board extends JPanel implements ActionListener {
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
+        ControllerState currState = controllers.getState(0);
+        if (currState.isConnected) {
+            if (currState.dpadUpJustPressed || currState.leftStickY > 0.8) {
+                goUp();
+            } else if (currState.dpadDownJustPressed || currState.leftStickY < -0.8) {
+                goDown();
+            } else if (currState.dpadRightJustPressed || currState.leftStickX > 0.8) {
+                goRight();
+            } else if (currState.dpadLeftJustPressed || currState.leftStickX < -0.8) {
+                goLeft();
+            }
+        }
+
         doDrawing(g);
     }
 
     private void doDrawing(Graphics g) {
 
         switch (gameStatus) {
-            case START -> {
+            case START: {
                 //draw background image
                 g.drawImage(StartIMG, 0, 0, this);
                 //draw textfield and buttoons
                 T_field.setBounds(490, 370, 180, 45);
                 startBtn.setBounds(700, 440, 125, 80);
+                break;
             }
-            case PLAY -> {
+            case PLAY: {
                 //draw background image
                 g.drawImage(BgIMG, 0, 0, this);
                 //draw Snake
@@ -158,8 +184,7 @@ public class Board extends JPanel implements ActionListener {
                 Font font2 = new Font("chiller", Font.BOLD, 28);
                 g.setColor(Color.white);
                 g.setFont(font2);
-                g.drawString(LoadScore.getScore() + " ", 720, 790);
-                g.drawString("- " + LoadScore.getName(), 755, 790);
+                g.drawString(getMax() + "", 720, 790);
                 g.drawString(score + " ", 720, 755);
                 g.drawString("- " + name, 755, 755);
                 //draw timeCounter and Snake length
@@ -180,8 +205,9 @@ public class Board extends JPanel implements ActionListener {
                         regimenCounter = 0;
                     }
                 }
+                break;
             }
-            case TRANSITION -> {
+            case TRANSITION: {
                 //stop the timer
                 timer.stop();
                 //draw background image
@@ -189,8 +215,9 @@ public class Board extends JPanel implements ActionListener {
                 //draw buttons
                 tryAgainBtn.setBounds(470, 300, 260, 80);
                 tryAgainBtn.setVisible(true);
+                break;
             }
-            case END -> {
+            case END: {
                 //stop the timer
                 timer.stop();
                 //draw background image
@@ -200,9 +227,20 @@ public class Board extends JPanel implements ActionListener {
                 exitBtn.setVisible(true);
 
                 //Save Score
-                SaveScore.setScore(score, name);
+                Save.setScore(name, scores, times);
+                break;
             }
         }
+    }
+
+    private int getMax() {
+        int max = score;
+        for (int i:scores) {
+            if(i > max)
+                max = i;
+        }
+
+        return max;
     }
 
     private void randomFoodAndWall() {
@@ -308,22 +346,12 @@ public class Board extends JPanel implements ActionListener {
         startBtn.setText("Start");
         startBtn.setFont(new Font("chiller", Font.BOLD, 50));
         startBtn.setBackground(Color.GREEN);
-        startBtn.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent arg0) {
-
-                //start the timer
-                timer.start();
-                //set gameStatus PLAY
-                gameStatus = Game.PLAY;
-                //get the player name of T_field
-                name = T_field.getText();
-                //hide the textfield and start button
-                T_field.setVisible(false);
-                startBtn.setVisible(false);
-
-            }
+        startBtn.addActionListener(arg0 -> {
+            timer.start();
+            gameStatus = Game.PLAY;
+            name = T_field.getText();
+            T_field.setVisible(false);
+            startBtn.setVisible(false);
         });
         add(startBtn);
 
@@ -331,12 +359,7 @@ public class Board extends JPanel implements ActionListener {
         exitBtn.setVisible(false);
         exitBtn.setFont(new Font("chiller", Font.BOLD, 50));
         exitBtn.setBackground(Color.RED);
-        exitBtn.addActionListener(arg0 -> {
-
-            //Exit game
-            System.exit(0);
-
-        });
+        exitBtn.addActionListener(arg0 -> System.exit(0));
         add(exitBtn);
 
         tryAgainBtn.setText("Next Trial!");
@@ -344,14 +367,9 @@ public class Board extends JPanel implements ActionListener {
         tryAgainBtn.setFont(new Font("chiller", Font.BOLD, 50));
         tryAgainBtn.setBackground(Color.GREEN);
         tryAgainBtn.addActionListener(arg0 -> {
-
-            //initial game to play again
             initGame();
-            //set gameStatus to PLAY
-            gameStatus = Game.PLAY;
-            //start the timer
             timer.start();
-            //hide the buttons
+            gameStatus = Game.PLAY;
             exitBtn.setVisible(false);
             tryAgainBtn.setVisible(false);
         });
@@ -404,6 +422,38 @@ public class Board extends JPanel implements ActionListener {
 
     }
 
+    private void goUp() {
+        if (!downDir) {
+            upDir = true;
+            rightDir = false;
+            leftDir = false;
+        }
+    }
+
+    private void goRight() {
+        if (!leftDir) {
+            rightDir = true;
+            upDir = false;
+            downDir = false;
+        }
+    }
+
+    private void goLeft() {
+        if (!rightDir) {
+            leftDir = true;
+            upDir = false;
+            downDir = false;
+        }
+    }
+
+    private void goDown() {
+        if (!upDir) {
+            downDir = true;
+            rightDir = false;
+            leftDir = false;
+        }
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
 
@@ -444,31 +494,20 @@ public class Board extends JPanel implements ActionListener {
         @Override
         public void keyPressed(KeyEvent e) {
 
-            int key = e.getKeyCode();
-
-            if ((key == KeyEvent.VK_LEFT) && (!rightDir)) {
-                leftDir = true;
-                upDir = false;
-                downDir = false;
-            }
-
-            if ((key == KeyEvent.VK_RIGHT) && (!leftDir)) {
-                rightDir = true;
-                upDir = false;
-                downDir = false;
-            }
-
-            if ((key == KeyEvent.VK_UP) && (!downDir)) {
-                upDir = true;
-                rightDir = false;
-                leftDir = false;
-            }
-
-            if ((key == KeyEvent.VK_DOWN) && (!upDir)) {
-                downDir = true;
-                rightDir = false;
-                leftDir = false;
+            switch (e.getKeyCode()) {
+                case KeyEvent.VK_LEFT:
+                    goLeft();
+                    break;
+                case KeyEvent.VK_RIGHT:
+                    goRight();
+                    break;
+                case KeyEvent.VK_UP:
+                    goUp();
+                    break;
+                case KeyEvent.VK_DOWN:
+                    goDown();
             }
         }
     }
+
 }
