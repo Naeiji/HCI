@@ -187,7 +187,7 @@ public class Alien extends Canvas {
      */
     private void initEntities() {
         // create the player ship and place it roughly in the center of the screen
-        ship = new ShipEntity(this, "sprites/ship.gif", 370, 550);
+        ship = new ShipEntity(this, "images/ship.gif", 370, 550);
         entities.add(ship);
 
         // create a block of aliens (5 rows, by 12 aliens, spaced evenly)
@@ -195,8 +195,8 @@ public class Alien extends Canvas {
         for (int row = 0; row < 5; row++) {
             for (int x = 0; x < 12; x++) {
                 String[] sprites = new String[]{
-                        "sprites/alien.gif",
-                        "sprites/alien1.gif"
+                        "images/alien.gif",
+                        "images/alien1.gif"
                 };
                 Entity alien = new AlienEntity(this, sprites, 100 + (x * 50), (50) + row * 30);
                 entities.add(alien);
@@ -277,7 +277,7 @@ public class Alien extends Canvas {
 
         // if we waited long enough, create the shot entity, and record the time.
         lastFire = System.currentTimeMillis();
-        ShotEntity shot = new ShotEntity(this, "sprites/shot.gif", ship.getX() + 10, ship.getY() - 30);
+        ShotEntity shot = new ShotEntity(this, "images/shot.gif", ship.getX() + 10, ship.getY() - 30);
         entities.add(shot);
     }
 
@@ -294,7 +294,7 @@ public class Alien extends Canvas {
             if (entity instanceof AlienEntity) {
 
                 if (random.nextInt(1001) == 1000) {
-                    AlienShotEntity shot = new AlienShotEntity(this, "sprites/alienshot.gif", entity.getX() + 15, entity.getY() + 20);
+                    AlienShotEntity shot = new AlienShotEntity(this, "images/alienshot.gif", entity.getX() + 15, entity.getY() + 20);
                     entities.add(shot);
                 }
             }
