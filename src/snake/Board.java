@@ -1,4 +1,4 @@
-package Snake;
+package snake;
 
 import com.studiohartman.jamepad.ControllerManager;
 import com.studiohartman.jamepad.ControllerState;
@@ -13,7 +13,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.Arrays;
-import java.util.Collections;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;

@@ -1,4 +1,4 @@
-package Snake;
+package snake;
 
 import java.awt.EventQueue;
 import javax.swing.JFrame;
@@ -13,7 +13,7 @@ public class Snake extends JFrame {
         setResizable(false);
         pack();
         
-        setTitle("Snake");
+        setTitle("snake");
         setSize(1000, 828);
         setResizable(false);
         setLocationRelativeTo(null);
