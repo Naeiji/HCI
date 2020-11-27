@@ -103,6 +103,12 @@ public class KeyInputHandler extends KeyAdapter {
                 // since we've now recieved our key typed
                 // event we can mark it as such and start
                 // our new game
+
+                if (game.trialDone()) {
+                    Save.setScore(game.getScores(), game.getAccuracies());
+                    System.exit(0);
+                }
+
                 game.setWaitingForKeyPress(false);
                 game.startGame();
                 pressCount = 0;

@@ -7,7 +7,9 @@ import java.awt.Graphics2D;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferStrategy;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 
 import javax.swing.JFrame;
@@ -116,6 +118,11 @@ public class Alien extends Canvas {
      */
     private boolean pausedGame = false;
 
+    private int numberOfShots;
+    private int trials = 5;
+    private int scores[] = new int[5];
+    private String accuracies[] = new String[5];
+
     /**
      * Construct our game and set it running.
      */
@@ -161,6 +168,9 @@ public class Alien extends Canvas {
         createBufferStrategy(2);
         strategy = getBufferStrategy();
 
+        Arrays.fill(scores, 0);
+        Arrays.fill(accuracies, "");
+
         // initialise the entities in our game so there's something
         // to see at startup
         initEntities();
@@ -189,6 +199,8 @@ public class Alien extends Canvas {
         // create the player ship and place it roughly in the center of the screen
         ship = new ShipEntity(this, "images/ship.gif", 370, 550);
         entities.add(ship);
+
+        numberOfShots = 0;
 
         // create a block of aliens (5 rows, by 12 aliens, spaced evenly)
         alienCount = 0;
@@ -224,12 +236,35 @@ public class Alien extends Canvas {
         removeList.add(entity);
     }
 
+    public int[] getScores() {
+        return scores;
+    }
+
+    public String[] getAccuracies() {
+        return accuracies;
+    }
+
+    public boolean trialDone() {
+        return trials < 1;
+    }
+
+    private void handleRound(String msg) {
+        System.out.println("trial remained: " + trials);
+        DecimalFormat _numberFormat = new DecimalFormat("#0.0");
+        scores[5 - trials] = 60 - alienCount;
+        accuracies[5 - trials] = _numberFormat.format(100 * scores[5 - trials] / (double) numberOfShots);
+        trials--;
+        message = trialDone() ? "Trials done. Exit?" : msg;
+        message += " (Score: " + scores[5 - trials - 1];
+        message += " Accuracy: " + accuracies[5 - trials - 1] + "%)";
+        waitingForKeyPress = true;
+    }
+
     /**
      * Notification that the player has died.
      */
     public void notifyDeath() {
-        message = "Oh no! They got you, try again?";
-        waitingForKeyPress = true;
+        handleRound("Oh no! They got you, next trial?");
     }
 
     /**
@@ -237,8 +272,7 @@ public class Alien extends Canvas {
      * are dead.
      */
     public void notifyWin() {
-        message = "Well done! You Win!";
-        waitingForKeyPress = true;
+        handleRound("Well done!, next trial?");
     }
 
     /**
@@ -278,6 +312,7 @@ public class Alien extends Canvas {
         // if we waited long enough, create the shot entity, and record the time.
         lastFire = System.currentTimeMillis();
         ShotEntity shot = new ShotEntity(this, "images/shot.gif", ship.getX() + 10, ship.getY() - 30);
+        numberOfShots++;
         entities.add(shot);
     }
 
