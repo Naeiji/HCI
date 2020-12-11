@@ -20,6 +20,8 @@ import alien.entities.AlienShotEntity;
 import alien.entities.Entity;
 import alien.entities.ShipEntity;
 import alien.entities.ShotEntity;
+import com.studiohartman.jamepad.ControllerManager;
+import com.studiohartman.jamepad.ControllerState;
 
 /**
  * The main hook of our game. This class with both act as a manager
@@ -159,6 +161,48 @@ public class Alien extends Canvas {
         // add a key input system (defined below) to our canvas
         // so we can respond to key pressed
         addKeyListener(new KeyInputHandler(this));
+
+        ControllerManager controllers = new ControllerManager();
+        controllers.initSDLGamepad();
+
+        new Thread() {
+            @Override
+            public void run() {
+                super.run();
+                boolean rf = false;
+                boolean lf = false;
+                boolean ff = false;
+
+                while (true) {
+                    ControllerState currState = controllers.getState(0);
+                    if (currState.isConnected) {
+                        if (currState.dpadRight || currState.leftStickX > 0.8) {
+                            setRightPressed(true);
+                            rf = true;
+                        } else if (currState.dpadLeft || currState.leftStickX < -0.8) {
+                            setLeftPressed(true);
+                            lf = true;
+                        }else if(currState.a) {
+                            setFirePressed(true);
+                            ff = true;
+                        } else {
+                            if (rf) {
+                                setRightPressed(false);
+                                rf = false;
+                            }
+                            if(lf) {
+                                setLeftPressed(false);
+                                lf = false;
+                            }
+                            if(ff) {
+                                setFirePressed(false);
+                                ff = false;
+                            }
+                        }
+                    }
+                }
+            }
+        }.start();
 
         // request the focus so key events come to us
         requestFocus();
